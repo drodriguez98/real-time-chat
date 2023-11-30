@@ -27,7 +27,7 @@
 
                 }
 
-                // Si no hay nombre de usuario almacenado, obtiene uno aleatorio de una API y almacenarlo localmente.
+                // Si no hay nombre de usuario almacenado, obtener uno aleatorio de una API y almacenarlo localmente.
 
                 const res = await fetch('https://random-data-api.com/api/users/random_user')
                 const { username: randomUsername } = await res.json() 
