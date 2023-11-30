@@ -13,7 +13,7 @@ import { createServer } from 'node:http'
 
 dotenv.config()
 
-// Definir el puerto del servidor
+// Definir el puerto del servidor.
 
 const port = process.env.PORT ?? 3000
 
@@ -25,7 +25,7 @@ const app = express()
 const server = createServer(app)
 const io = new Server(server, { connectionStateRecovery: {} })
 
-// Conectar a la base de datos MySQL y crear la tabla messages en la base de datos si no existe
+// Conectar a la base de datos MySQL y crear la tabla messages en la base de datos si no existe.
 
 const db = await mysql.createConnection({
 
@@ -39,7 +39,7 @@ const db = await mysql.createConnection({
 
 await db.execute('CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY AUTO_INCREMENT, content TEXT, user TEXT)')
 
-// Evento cuando se conecta o desconencta un cliente al servidor mediante Socket.IO
+// Evento cuando se conecta un cliente al servidor mediante Socket.IO
 
 io.on('connection', async (socket) => {
 
@@ -48,13 +48,13 @@ io.on('connection', async (socket) => {
 
   // Evento cuando el servidor recibe un mensaje desde el cliente.
 
+    // Obtiene el nombre de usuario del handshake inicial del cliente emisor.
+    // Guarda el mensaje en la base de datos.
+    // Reenvia el mensaje a todos los clientes conectados junto con su ID y nombre de usuario.
+
   socket.on('chat message', async (msg) => {
 
-    // Obtener el nombre de usuario del handshake inicial del cliente emisor.
-
     const username = socket.handshake.auth.username ?? 'anonymous' // console.log({ username }) 
-
-    // Guardar el mensaje en la base de datos.
     
     let result
 
@@ -74,21 +74,17 @@ io.on('connection', async (socket) => {
       
     }
 
-    // Reenviar el mensaje a todos los clientes conectados junto con su ID y nombre de usuario
-
     io.emit('chat message', msg, result[0].insertId.toString(), username)
 
   })
 
-  // Recuperar y mostrar mensajes del historial para un nuevo cliente que se conecta 
+  // Recuperar y emitir mensajes recuperados del historial a un cliente recién conectado.
 
   if (!socket.recovered) {
 
     try {
 
       const [results] = await db.execute('SELECT id, content, user FROM messages WHERE id > ?', [socket.handshake.auth.serverOffset ?? 0])
-
-      // Emite mensajes recuperados al cliente recién conectado
 
       results.forEach(row => { socket.emit('chat message', row.content, row.id.toString(), row.user) })
 
