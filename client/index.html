@@ -1,48 +1,113 @@
 <!DOCTYPE html>
-<html>
-<head>
-    <meta charset='utf-8'>
-    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
-    <title>Chat in real time!</title>
-    <meta name='viewport' content='width=device-width, initial-scale=1'>
-    <link rel='stylesheet' type='text/css' media='screen' href='styles.css'>
 
-    <script type='module'>
+<html lang="en">
 
-        import { io } from 'https://cdn.socket.io/4.3.2/socket.io.esm.min.js'
+    <head>
 
-        const socket = io()
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel='stylesheet' type='text/css' media='screen' href='styles.css'>
 
-        const form = document.getElementById('form')
-        const input = document.getElementById('input')
-        const messages = document.getElementById('messages')
+        <title>Chat in real time!</title>
 
-        socket.on('chat message', (msg) => {
-            const item = `<li>${msg}</li>`
-            messages.insertAdjacentHTML('beforeend', item)
-        })
+        <script type="module">
 
-        form.addEventListener('submit', (e) => {
-            e.preventDefault()
+            import { io } from 'https://cdn.socket.io/4.3.2/socket.io.esm.min.js'
 
-            if (input.value) {
-                socket.emit('chat message', input.value)
-                input.value = ''
+            // Función asincrónica para obtener el nombre de usuario
+
+            const getUsername = async () => {
+
+                const username = localStorage.getItem('username') // Obtiene el nombre de usuario almacenado localmente
+                
+                if (username) {
+
+                    console.log(`User existed ${username}`) // Imprime un mensaje si el nombre de usuario existe en el almacenamiento local
+                    return username
+
+                }
+
+                // Si no hay nombre de usuario almacenado, obtiene uno aleatorio de una API
+
+                const res = await fetch('https://random-data-api.com/api/users/random_user')
+                const { username: randomUsername } = await res.json() // Obtiene un nombre de usuario aleatorio de la respuesta JSON
+
+                localStorage.setItem('username', randomUsername) // Almacena el nombre de usuario aleatorio localmente
+                return randomUsername
             }
-        })
 
-    </script>
+            // Inicializa un socket de conexión usando Socket.IO con autenticación
 
-</head>
-<body>
+            const socket = io({
 
-    <section id="chat">
-        <ul id="messages"></ul>
-        <form id="form">
-            <input type="text" name="input" id="input" placeholder="Type a message" autocomplete="off"/>
-            <button type="submit">Enviar</button>
-        </form>
-    </section>
-    
-</body>
+                auth: {
+
+                    username: await getUsername(), // Obtiene el nombre de usuario para la autenticación del socket
+                    serverOffset: 0 // Establece el desfase del servidor inicialmente en 0
+
+                }
+
+            })
+
+            // Obtiene elementos del DOM necesarios para el chat
+
+            const form = document.getElementById('form') // Obtiene el formulario del chat
+            const input = document.getElementById('input') // Obtiene el campo de entrada de mensajes
+            const messages = document.getElementById('messages') // Obtiene el contenedor de mensajes
+
+            // Evento que maneja la recepción de mensajes del servidor
+
+            socket.on('chat message', (msg, serverOffset, username) => {
+
+                // Crea una nueva entrada de mensaje HTML con el contenido recibido
+
+                const item = `<li>
+
+                    <p>${msg}</p>
+                    <small>${username}</small>
+
+                </li>`
+
+                messages.insertAdjacentHTML('beforeend', item) // Agrega el mensaje al contenedor de mensajes
+                socket.auth.serverOffset = serverOffset // Actualiza el desfase del servidor en la autenticación del socket
+                messages.scrollTop = messages.scrollHeight // Hace scroll hacia abajo para mostrar el último mensaje
+
+            })
+
+            // Evento que maneja el envío de mensajes desde el formulario
+
+            form.addEventListener('submit', (e) => {
+
+                e.preventDefault() // Evita el comportamiento predeterminado del formulario
+
+                if (input.value) {
+
+                    socket.emit('chat message', input.value) // Emite el mensaje al servidor a través del socket
+                    input.value = '' // Borra el campo de entrada después de enviar el mensaje
+
+                }
+
+            })
+
+        </script>
+
+    </head>
+
+    <body>
+
+        <section id="chat">
+
+            <ul id="messages"></ul>
+
+            <form id="form">
+
+                <input type="text" name="message" id="input" placeholder="Type a message" autocomplete="off" />
+                <button type="submit">Enviar</button>
+
+            </form>
+            
+        </section>
+
+    </body>
+
 </html>
