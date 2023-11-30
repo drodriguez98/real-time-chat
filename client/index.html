@@ -14,52 +14,52 @@
 
             import { io } from 'https://cdn.socket.io/4.3.2/socket.io.esm.min.js'
 
-            // Función asincrónica para obtener el nombre de usuario
+            // Obtener el nombre de usuario almacenado localmente.
 
             const getUsername = async () => {
 
-                const username = localStorage.getItem('username') // Obtiene el nombre de usuario almacenado localmente
+                const username = localStorage.getItem('username')
                 
                 if (username) {
 
-                    console.log(`User existed ${username}`) // Imprime un mensaje si el nombre de usuario existe en el almacenamiento local
+                    console.log(`User existed ${username}`) 
                     return username
 
                 }
 
-                // Si no hay nombre de usuario almacenado, obtiene uno aleatorio de una API
+                // Si no hay nombre de usuario almacenado, obtiene uno aleatorio de una API y almacenarlo localmente.
 
                 const res = await fetch('https://random-data-api.com/api/users/random_user')
-                const { username: randomUsername } = await res.json() // Obtiene un nombre de usuario aleatorio de la respuesta JSON
+                const { username: randomUsername } = await res.json() 
 
-                localStorage.setItem('username', randomUsername) // Almacena el nombre de usuario aleatorio localmente
+                localStorage.setItem('username', randomUsername) 
+
                 return randomUsername
             }
 
-            // Inicializa un socket de conexión usando Socket.IO con autenticación
+            // Inicializar un socket de conexión usando Socket.IO con autenticación, estableciendo el desfase del servidor inicialmente en 0.
 
             const socket = io({
 
                 auth: {
 
-                    username: await getUsername(), // Obtiene el nombre de usuario para la autenticación del socket
-                    serverOffset: 0 // Establece el desfase del servidor inicialmente en 0
+                    username: await getUsername(),
+                    serverOffset: 0 
 
                 }
 
             })
 
-            // Obtiene elementos del DOM necesarios para el chat
+            // Obtener elementos del DOM necesarios para el chat.
 
-            const form = document.getElementById('form') // Obtiene el formulario del chat
-            const input = document.getElementById('input') // Obtiene el campo de entrada de mensajes
-            const messages = document.getElementById('messages') // Obtiene el contenedor de mensajes
+            const form = document.getElementById('form')
+            const input = document.getElementById('input') 
+            const messages = document.getElementById('messages') 
 
-            // Evento que maneja la recepción de mensajes del servidor
+            // Recibir mensajes del servidor. 
+            // Crea una nueva entrada de mensaje HTML con el contenido recibido, actualiza el desfase y hace scroll hacia abajo para mostrar el último mensaje.
 
             socket.on('chat message', (msg, serverOffset, username) => {
-
-                // Crea una nueva entrada de mensaje HTML con el contenido recibido
 
                 const item = `<li>
 
@@ -68,13 +68,13 @@
 
                 </li>`
 
-                messages.insertAdjacentHTML('beforeend', item) // Agrega el mensaje al contenedor de mensajes
-                socket.auth.serverOffset = serverOffset // Actualiza el desfase del servidor en la autenticación del socket
-                messages.scrollTop = messages.scrollHeight // Hace scroll hacia abajo para mostrar el último mensaje
+                messages.insertAdjacentHTML('beforeend', item) 
+                socket.auth.serverOffset = serverOffset
+                messages.scrollTop = messages.scrollHeight
 
             })
 
-            // Evento que maneja el envío de mensajes desde el formulario
+            // Enviar mensajes al servidor desde el formulario a través del socket.
 
             form.addEventListener('submit', (e) => {
 
@@ -82,8 +82,8 @@
 
                 if (input.value) {
 
-                    socket.emit('chat message', input.value) // Emite el mensaje al servidor a través del socket
-                    input.value = '' // Borra el campo de entrada después de enviar el mensaje
+                    socket.emit('chat message', input.value)
+                    input.value = '' 
 
                 }
 
